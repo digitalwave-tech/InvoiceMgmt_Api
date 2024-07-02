@@ -194,10 +194,6 @@ namespace InvoiceManagement.Controllers
 
                 var user_ = invoice_.CreateInvoice(invoices);
 
-                //if (user_.s )
-                //{
-
-                //}
                 var response = new { success = true, msg = user_.Result };
                 return Ok(response);
             }
