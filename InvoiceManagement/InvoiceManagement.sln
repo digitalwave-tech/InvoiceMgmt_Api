@@ -1,0 +1,37 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.9.34728.123
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "InvoiceManagement", "InvoiceManagement.csproj", "{E3460E23-D1D6-48A7-9C67-5C44C0BFC8BE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BusinessLayer", "..\BusinessLayer\BusinessLayer.csproj", "{2C99E3CD-7ED0-4E87-B95A-D9FAAE63403B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DAL", "..\DAL\DAL.csproj", "{1F7660CA-6C77-427B-ADC6-F2020774CD0F}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E3460E23-D1D6-48A7-9C67-5C44C0BFC8BE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E3460E23-D1D6-48A7-9C67-5C44C0BFC8BE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E3460E23-D1D6-48A7-9C67-5C44C0BFC8BE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E3460E23-D1D6-48A7-9C67-5C44C0BFC8BE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2C99E3CD-7ED0-4E87-B95A-D9FAAE63403B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2C99E3CD-7ED0-4E87-B95A-D9FAAE63403B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2C99E3CD-7ED0-4E87-B95A-D9FAAE63403B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2C99E3CD-7ED0-4E87-B95A-D9FAAE63403B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1F7660CA-6C77-427B-ADC6-F2020774CD0F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1F7660CA-6C77-427B-ADC6-F2020774CD0F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1F7660CA-6C77-427B-ADC6-F2020774CD0F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1F7660CA-6C77-427B-ADC6-F2020774CD0F}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {497EF37B-1F69-4BF7-B50E-A383768203F0}
+	EndGlobalSection
+EndGlobal
