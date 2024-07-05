@@ -12,6 +12,6 @@ namespace DAL.Interfaces
     {
         Task<string> CreateInvoice(Invoices invoices);
         IList<ViewInvoice> GetInvoices(string gstNo);
-        IList<PDFTemplate> GetInvoiceItemDetails(List<int> invoiceno);
+        //IList<PDFTemplate> GetInvoiceItemDetails(List<int> invoiceno);
     }
 }

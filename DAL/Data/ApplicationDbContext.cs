@@ -107,9 +107,15 @@ namespace DAL.Data
 
                 entity.Property(e => e.CompanyId).HasColumnName("companyId");
 
-                entity.Property(e => e.CustomerName)
-                    .HasMaxLength(500)
-                    .HasColumnName("customerName");
+                entity.Property(e => e.CustomerId).HasColumnName("customerId");
+
+                entity.Property(e => e.CustomerName).HasColumnName("customername");
+
+                entity.Property(e => e.SubTotal).HasColumnName("subTotal");
+
+                entity.Property(e => e.GstRate).HasColumnName("gstRate");
+
+                entity.Property(e => e.TotalAmt).HasColumnName("totalAmt");
 
                 entity.Property(e => e.InvoiceDate)
                     .HasColumnType("datetime")
@@ -121,42 +127,39 @@ namespace DAL.Data
                     .HasForeignKey(d => d.CompanyId)
                     .HasConstraintName("FK__Invoices__compan__09DE7BCC");
 
+                entity.HasOne(d => d.Customers)
+                    .WithMany(p => p.Invoices)
+                    .HasForeignKey(d => d.CustomerId)
+                    .HasConstraintName("FK__Invoices__customerId__0A688BB8");
+
                 entity.HasMany(e => e.Details)
                     .WithOne(d => d.InvoiceNoNavigation)
-                    .HasForeignKey(d => d.InvoiceNo)
+                    .HasForeignKey(d => d.invoiceNo)
                     .HasConstraintName("FK__ItemsDetails__invoiceNo__0BC6C43E")
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
             modelBuilder.Entity<ItemsDetails>(entity =>
             {
-                entity.HasKey(e => new { e.InvoiceNo, e.ItemName });
+                entity.HasKey(e => new { e.invoiceNo, e.itemName });
 
-                entity.Property(e => e.InvoiceNo).HasColumnName("invoiceNo");
+                entity.Property(e => e.invoiceNo).HasColumnName("invoiceNo");
 
-                entity.Property(e => e.ItemName)
+                entity.Property(e => e.itemName)
                     .HasMaxLength(500)
                     .HasColumnName("itemName");
 
-                entity.Property(e => e.Quantity).HasColumnName("quantity");
+                entity.Property(e => e.quantity).HasColumnName("quantity");
 
-                entity.Property(e => e.Price).HasColumnName("price");
+                entity.Property(e => e.price).HasColumnName("price");
 
-                entity.Property(e => e.GrossAmt)
+                entity.Property(e => e.Amount)
                     .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("GrossAmt");
-
-                entity.Property(e => e.GSTRate)
-                   .HasColumnType("decimal(18, 2)")
-                   .HasColumnName("GSTRate");
-
-                entity.Property(e => e.NetAmt)
-                    .HasColumnType("decimal(18, 2)")
-                    .HasColumnName("NetAmt");
+                    .HasColumnName("Amount");
 
                 entity.HasOne(d => d.InvoiceNoNavigation)
                     .WithMany(p => p.Details)
-                    .HasForeignKey(d => d.InvoiceNo)
+                    .HasForeignKey(d => d.invoiceNo)
                     .HasConstraintName("FK__ItemsDetails__invoiceNo__0BC6C43E")
                     .OnDelete(DeleteBehavior.Cascade);
             });

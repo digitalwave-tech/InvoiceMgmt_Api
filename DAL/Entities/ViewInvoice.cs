@@ -11,7 +11,7 @@ namespace DAL.Entities
         public DateTime? InvoiceDate { get; set; }
         public string? CustomerName { get; set; }
         public int? InvoiceNo { get; set; }
-        public decimal? NetAmount { get; set; }
+        public decimal? NetAmt { get; set; }
     }
     public class ViewInvoiceList
     {

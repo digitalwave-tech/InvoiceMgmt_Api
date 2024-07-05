@@ -6,6 +6,10 @@ namespace DAL.Entities
 {
     public partial class Customers
     {
+        public Customers()
+        {
+            Invoices = new HashSet<Invoices>();
+        }
         [JsonIgnore]
         public int CustomerId { get; set; }
         [JsonIgnore]
@@ -22,5 +26,7 @@ namespace DAL.Entities
         public DateTime? CreatedOn { get; set; }
         [JsonIgnore]
         public virtual UserAccount? Company { get; set; }
+        [JsonIgnore]
+        public virtual ICollection<Invoices> Invoices { get; set; }
     }
 }
