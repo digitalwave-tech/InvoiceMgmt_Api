@@ -14,12 +14,10 @@ namespace DAL.Entities
         [JsonIgnore]
         public int? CustomerId { get; set; }
         [JsonIgnore]
-        public DateTime? InvoiceDate { get; set; }
-        [JsonIgnore]
-        public string? CustomerName {  get; set; }
+        public DateTime InvoiceDate { get; set; }
         public decimal? SubTotal { get; set; }
-        public decimal GstRate { get; set; }
-        public decimal TotalAmt { get; set; }   
+        public decimal? GstRate { get; set; }
+        public decimal? TotalAmt { get; set; }   
         [JsonIgnore]
         public virtual UserAccount? Company { get; set; }
         [JsonIgnore]

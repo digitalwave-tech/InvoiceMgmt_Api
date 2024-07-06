@@ -109,7 +109,7 @@ namespace DAL.Data
 
                 entity.Property(e => e.CustomerId).HasColumnName("customerId");
 
-                entity.Property(e => e.CustomerName).HasColumnName("customername");
+                //entity.Property(e => e.CustomerName).HasColumnName("customername");
 
                 entity.Property(e => e.SubTotal).HasColumnName("subTotal");
 

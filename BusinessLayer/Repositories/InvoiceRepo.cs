@@ -5,6 +5,7 @@ using DAL.Models;
 using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Net.Http;
+using System.Security.Claims;
 
 namespace BusinessLayer.Repositories
 {
@@ -16,13 +17,7 @@ namespace BusinessLayer.Repositories
         {
             try 
             {
-                var customeId = dbContext.Customers
-                    .Where(y => (y.FirstName + " " + y.LastName) == invoices.CustomerName)
-                    .Select(x =>x.CustomerId).FirstOrDefault();
-
-                
-                invoices.CustomerId = customeId;
-
+               
                 var response = dbContext.Invoices.Add(invoices);
                 await dbContext.SaveChangesAsync();
 
@@ -55,15 +50,21 @@ namespace BusinessLayer.Repositories
                     var invoiceNumbers = invoicelist.Select(x => x.InvoiceNo).ToList();
                     var itemDetails = dbContext.ItemsDetails.Where(u => invoiceNumbers.Contains(u.invoiceNo)).ToList();
 
+                    var customerIds = invoicelist.Select(x => x.CustomerId).Distinct().ToList();
+                    var customers = dbContext.Customers
+                        .Where(c => customerIds.Contains(c.CustomerId))
+                        .ToList();
+
                     // Creating the list of ViewInvoice
                     var viewInvoices = invoicelist.Select(invoice => new ViewInvoice
                     {
                         InvoiceDate = invoice.InvoiceDate,
-                        //CustomerName = invoice.CustomerName,
+                        CustomerName = customers
+                                .Where(c => c.CustomerId == invoice.CustomerId)
+                                .Select(c => c.FirstName + " " + c.LastName)
+                                .FirstOrDefault() ?? "Unknown",
                         InvoiceNo = invoice.InvoiceNo,
-                        NetAmt = itemDetails
-                                    .Where(item => item.invoiceNo == invoice.InvoiceNo)
-                                    .Sum(item => item.Amount)
+                        NetAmt = invoice.TotalAmt
                     }).ToList();
 
                     return viewInvoices;
@@ -83,170 +84,90 @@ namespace BusinessLayer.Repositories
             return null;
         }
 
-        //public IList<PDFTemplate> GetInvoiceItemDetails(List<int> invoicenos)
-        //{
-        //    //try
-        //    //{
+        public Task<string> BindInvoice(InvoiceRequest invoiceRequest)
+        {
+            var customer_Id = dbContext.Customers
+                   .Where(y => (y.FirstName + " " + y.LastName) == invoiceRequest.customerName)
+                   .Select(x => x.CustomerId).FirstOrDefault();
+
+            Invoices invoices = new Invoices()
+            {
+                CompanyId = invoiceRequest.companyId,
+                CustomerId = customer_Id,
+                SubTotal = invoiceRequest.subtotal,
+                GstRate = invoiceRequest.gstRate,
+                TotalAmt = invoiceRequest.totalAmt,
+                Details = invoiceRequest.Details
+            };
+               var result= CreateInvoice(invoices);
+            return result;
+
+        }
+        public IList<PDFTemplate> GetInvoiceItemDetails(List<int?> invoicenos)
+        {
+            try
+            {
+
+                var query = from id in dbContext.ItemsDetails
+                            where invoicenos.Contains(id.invoiceNo)  // Filter by invoicenos list
+                            join i in dbContext.Invoices on id.invoiceNo equals i.InvoiceNo
+                            join c in dbContext.Customers on i.CustomerId equals c.CustomerId
+                            join ua in dbContext.UserAccount on c.CompanyId equals ua.CompanyId
+                            group new { id, i, c, ua } by new { ua.CompanyId, ua.CompanyName, ua.AddressLine, ua.Phone, ua.City, ua.States, ua.Pincode, ua.EmailId } into companyGroup
+                            select new PDFTemplate
+                            {
+                                companyDetails = new Companydetails
+                                {
+                                    companyid = companyGroup.Key.CompanyId,
+                                    companyName = companyGroup.Key.CompanyName,
+                                    companyaddress = companyGroup.Key.AddressLine,
+                                    companyphoneNo = companyGroup.Key.Phone,
+                                    companycity = companyGroup.Key.City,
+                                    companystate = companyGroup.Key.States,
+                                    companypincode = companyGroup.Key.Pincode,
+                                    companyemail = companyGroup.Key.EmailId,
+                                    customerdetails = (
+                                        from customerGroup in companyGroup
+                                        group customerGroup by new { customerGroup.c.CustomerId, customerGroup.c.FirstName, customerGroup.c.LastName, customerGroup.c.AddressLine, customerGroup.c.Phone, customerGroup.c.City, customerGroup.c.States, customerGroup.c.Pincode, customerGroup.c.EmailId } into groupedCustomers
+                                        select new Customerdetail
+                                        {
+                                            customername = groupedCustomers.Key.FirstName + " " + groupedCustomers.Key.LastName,
+                                            custoomeraddress = groupedCustomers.Key.AddressLine,
+                                            customerphoneNo = groupedCustomers.Key.Phone,
+                                            customercity = groupedCustomers.Key.City,
+                                            customerstate = groupedCustomers.Key.States,
+                                            customerpincode = groupedCustomers.Key.Pincode,
+                                            customeremail = groupedCustomers.Key.EmailId,
+                                            itemDetails = groupedCustomers.Select(item => new Itemdetail
+                                            {
+                                                invoiceNo = item.id.invoiceNo,
+                                                invocieDate = item.i.InvoiceDate,
+                                                itemName = item.id.itemName,
+                                                quantity = item.id.quantity,
+                                                price = item.id.price,
+                                                Amount = item.id.Amount,
+                                                gstRate = item.i.GstRate,
+                                                subtotalAmt = item.i.SubTotal,
+                                                netAmount = item.i.TotalAmt,
+                                            }).ToArray()
+                                        }).ToArray()
+                                }
+                            };
+
+                return query.ToList();
+            }
+            catch (Exception ex)
+            {
+                var exc = new ErrorLog
+                {
+                    errorMsg = "ErrorMsg : " + ex.Message + "\r\n" + ex.StackTrace,
+                    methodName = nameof(GetInvoiceItemDetails),
+                };
+                errorLogRepo.WriteErrorLog(exc);
+            }
+            return null;
+        }
 
 
-
-        //    //    //var data = from id in dbContext.ItemsDetails
-        //    //    //           join i in dbContext.Invoices on id.invoiceNo equals i.InvoiceNo
-        //    //    //           join ua in dbContext.UserAccount on i.CompanyId equals ua.CompanyId
-        //    //    //           join c in dbContext.Customers on ua.CompanyId equals c.CompanyId
-        //    //    //           where invoicenos.Contains(i.InvoiceNo ?? 0) &&
-        //    //    //                 i.CustomerName.Contains(c.FirstName + " " + c.LastName)
-        //    //    //           group new { id, i, ua, c } by new
-        //    //    //           {
-        //    //    //               ua.CompanyId,
-        //    //    //               ua.CompanyName,
-        //    //    //               ua.AddressLine,
-        //    //    //               ua.Phone,
-        //    //    //               ua.City,
-        //    //    //               ua.EmailId,
-        //    //    //               ua.States,
-        //    //    //               ua.Pincode,
-        //    //    //               c.FirstName,
-        //    //    //               c.LastName,
-        //    //    //               customerAddress = c.AddressLine,
-        //    //    //               customerPhone = c.Phone,
-        //    //    //               customerCity = c.City,
-        //    //    //               customerEmail = c.EmailId,
-        //    //    //               customerState = c.States,
-        //    //    //               customerPincode = c.Pincode
-        //    //    //           } into g
-        //    //    //           select new PDFTemplate
-        //    //    //           {
-        //    //    //               companyDetails = new Companydetails
-        //    //    //               {
-        //    //    //                   companyid = g.Key.CompanyId,
-        //    //    //                   companyName = g.Key.CompanyName,
-        //    //    //                   companyaddress = g.Key.AddressLine,
-        //    //    //                   companyphoneNo = g.Key.Phone,
-        //    //    //                   companycity = g.Key.City,
-        //    //    //                   companyemail = g.Key.EmailId,
-        //    //    //                   companystate = g.Key.States,
-        //    //    //                   companypincode = g.Key.Pincode,
-        //    //    //                   customerdetails = new[]
-        //    //    //                   {
-        //    //    //                   new Customerdetail
-        //    //    //                   {
-        //    //    //                       customername = g.Key.FirstName + " " + g.Key.LastName,
-        //    //    //                       custoomeraddress = g.Key.customerAddress,
-        //    //    //                       customerphoneNo = g.Key.customerPhone,
-        //    //    //                       customercity = g.Key.customerCity,
-        //    //    //                       customeremail = g.Key.customerEmail,
-        //    //    //                       customerstate = g.Key.customerState,
-        //    //    //                       customerpincode = g.Key.customerPincode,
-        //    //    //                       itemDetails = g.Select(x => new Itemdetail
-        //    //    //                       {
-        //    //    //                           invoiceNo = x.id.invoiceNo,
-        //    //    //                           invocieDate = x.i.InvoiceDate.ToString(),
-        //    //    //                           itemName = x.id.itemName,
-        //    //    //                           quantity = x.id.quantity,
-        //    //    //                           price = x.id.price,
-        //    //    //                           totalAmount = x.id.NetAmt
-        //    //    //                       }).ToArray()
-        //    //    //                   }
-        //    //    //               }
-        //    //    //               }
-        //    //    //           };
-
-        //    //    //var result = data.ToList();
-
-
-        //    //    var intermediateData = from id in dbContext.ItemsDetails
-        //    //                           join i in dbContext.Invoices on id.invoiceNo equals i.InvoiceNo
-        //    //                           join ua in dbContext.UserAccount on i.CompanyId equals ua.CompanyId
-        //    //                           join c in dbContext.Customers on ua.CompanyId equals c.CompanyId
-        //    //                           where invoicenos.Contains(i.InvoiceNo ?? 0) &&
-        //    //                                 (i.CustomerName ?? "").Contains((c.FirstName ?? "") + " " + (c.LastName ?? ""))
-        //    //                           select new { id, i, ua, c };
-
-        //    //    var intermediateResult = intermediateData.ToList();
-
-        //    //    var data = from id in dbContext.ItemsDetails
-        //    //               join i in dbContext.Invoices on id.invoiceNo equals i.InvoiceNo
-        //    //               join ua in dbContext.UserAccount on i.CompanyId equals ua.CompanyId
-        //    //               join c in dbContext.Customers on ua.CompanyId equals c.CompanyId
-        //    //               where invoicenos.Contains(i.InvoiceNo ?? 0) &&
-        //    //                     (i.CustomerName ?? "").Contains((c.FirstName ?? "") + " " + (c.LastName ?? ""))
-        //    //               group new { id, i, ua, c } by new
-        //    //               {
-        //    //                   ua.CompanyId,
-        //    //                   ua.CompanyName,
-        //    //                   ua.AddressLine,
-        //    //                   ua.Phone,
-        //    //                   ua.City,
-        //    //                   ua.EmailId,
-        //    //                   ua.States,
-        //    //                   ua.Pincode,
-        //    //                   c.FirstName,
-        //    //                   c.LastName,
-        //    //                   customerAddress = c.AddressLine,
-        //    //                   customerPhone = c.Phone,
-        //    //                   customerCity = c.City,
-        //    //                   customerEmail = c.EmailId,
-        //    //                   customerState = c.States,
-        //    //                   customerPincode = c.Pincode
-        //    //               }
-        //    //            into g
-        //    //            select g;
-                       
-        //    //    //        select new PDFTemplate
-        //    //    //        {
-        //    //    //            companyDetails = new Companydetails
-        //    //    //            {
-        //    //    //                companyid = g.Key.CompanyId,
-        //    //    //                companyName = g.Key.CompanyName,
-        //    //    //                companyaddress = g.Key.AddressLine,
-        //    //    //                companyphoneNo = g.Key.Phone,
-        //    //    //                companycity = g.Key.City,
-        //    //    //                companyemail = g.Key.EmailId,
-        //    //    //                companystate = g.Key.States,
-        //    //    //                companypincode = g.Key.Pincode,
-        //    //    //                customerdetails = new[]
-        //    //    //                {
-        //    //    //    new Customerdetail
-        //    //    //    {
-        //    //    //        customername = g.Key.FirstName + " " + g.Key.LastName,
-        //    //    //        custoomeraddress = g.Key.customerAddress,
-        //    //    //        customerphoneNo = g.Key.customerPhone,
-        //    //    //        customercity = g.Key.customerCity,
-        //    //    //        customeremail = g.Key.customerEmail,
-        //    //    //        customerstate = g.Key.customerState,
-        //    //    //        customerpincode = g.Key.customerPincode,
-        //    //    //        itemDetails = g.Select(x => new Itemdetail
-        //    //    //        {
-        //    //    //            invoiceNo = x.id.invoiceNo,
-        //    //    //            invocieDate = x.i.InvoiceDate.ToString(),
-        //    //    //            itemName = x.id.itemName,
-        //    //    //            quantity = x.id.quantity,
-        //    //    //            price = x.id.price,
-        //    //    //            totalAmount = x.id.NetAmt
-        //    //    //        }).ToArray()
-        //    //    //    }
-        //    //    //}
-        //    //    //            }
-        //    //    //        };
-        //    //    var result = data.ToArray();
-
-
-        //    //    var list_ = result.ToList();
-        //    //    return (IList<PDFTemplate>)list_;
-        //    //}
-        //    //catch (Exception ex)
-        //    //{
-        //    //    var exc = new ErrorLog
-        //    //    {
-        //    //        errorMsg = "ErrorMsg : " + ex.Message + "\r\n" + ex.StackTrace,
-        //    //        methodName = nameof(GetInvoiceItemDetails),
-        //    //    };
-        //    //    errorLogRepo.WriteErrorLog(exc);
-        //    //}
-        //    return null;
-        //}
-
-       
     }
 }

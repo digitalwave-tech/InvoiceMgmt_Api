@@ -41,12 +41,14 @@ namespace DAL.Models
     public class Itemdetail
     {
         public int? invoiceNo { get; set; }
-        public string? invocieDate { get; set; }
+        public DateTime invocieDate { get; set; }
         public string? itemName { get; set; }
         public int? quantity { get; set; }
         public decimal? price { get; set; }
-        public decimal? totalAmount { get; set; }
-        public decimal? NetAmount { get; set; }
+        public decimal? Amount { get; set; }
+        public decimal? gstRate { get; set; }
+        public decimal? subtotalAmt { get; set; }
+        public decimal? netAmount { get; set; }
 
     }
 

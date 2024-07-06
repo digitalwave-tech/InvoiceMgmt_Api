@@ -11,7 +11,7 @@ namespace DAL.Entities
             Invoices = new HashSet<Invoices>();
         }
         [JsonIgnore]
-        public int CustomerId { get; set; }
+        public int? CustomerId { get; set; }
         [JsonIgnore]
         public Guid? CompanyId { get; set; }
         public string? FirstName { get; set; }
